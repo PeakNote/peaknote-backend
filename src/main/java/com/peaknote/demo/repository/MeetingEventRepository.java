@@ -4,6 +4,7 @@ import com.peaknote.demo.entity.MeetingEvent;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,5 +31,11 @@ public interface MeetingEventRepository extends JpaRepository<MeetingEvent, Stri
 
     @Query("SELECT m.eventId FROM MeetingEvent m WHERE m.joinUrl = :joinUrl")
     List<String> findEventIdsByjoinUrl(@Param("joinUrl") String joinUrl);
+
+    @Query("SELECT m.eventId FROM MeetingEvent m " +
+        "WHERE m.joinUrl = :joinUrl " +
+        "AND m.transcriptStatus = 'saved' " +
+        "ORDER BY m.startTime DESC")
+    List<String> findSavedEventIdsByJoinUrl(@Param("joinUrl") String joinUrl);
 
 }

@@ -128,7 +128,7 @@ public class TranscriptService {
         }
         log.info("URL corresponding byte length: {}", bytes.length);
         log.info("URL hexadecimal: {}", hexBuilder.toString());
-        List<String> eventIds = meetingEventRepository.findEventIdsByjoinUrl(url);
+        List<String> eventIds = meetingEventRepository.findSavedEventIdsByJoinUrl(url);
         if(eventIds.size()>0){
             log.info("✅ Loaded EventId list from database, url={}, eventIds={}", url, eventIds);
             return eventIds;
