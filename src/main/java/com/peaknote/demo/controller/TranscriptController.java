@@ -32,26 +32,45 @@ public class TranscriptController {
     //         .collect(Collectors.toList());
     // }
     @GetMapping("/by-url")
-    public Map<String, String> getTranscriptsByUrl(@RequestParam String url) {
+    public Map<String, Object> getTranscriptsByUrl(@RequestParam String url) {
         try {
             if (url == null || url.trim().isEmpty()) {
                 throw new IllegalArgumentException("URL parameter cannot be empty");
             }
-            
-            //String decodedUrl = URLDecoder.decode(url, StandardCharsets.UTF_8);
 
-            List<String> eventIds = transcriptService.getEventIdsByUrl(url);
-            if (eventIds == null || eventIds.isEmpty()) {
-                throw new IllegalArgumentException("URL does not exist");
-            }
-            String transcript = transcriptService.getTranscriptByEventId(eventIds.get(0));
-            return Map.of("eventId", eventIds.get(0), "transcript", transcript);
+            return transcriptService.getMeetingDataByUrl(url);
         } catch (Exception e) {
             System.err.println("❌ Failed to get meeting transcript: url=" + url + ", error=" + e.getMessage());
             e.printStackTrace();
-            return Map.of("transcript", "", "error", "Failed to get meeting transcript: " + e.getMessage());
+
+            return Map.of(
+                "meetingList", List.of(),
+                "meetingDetails", Map.of("eventId", "", "transcript", ""),
+                "error", "Failed to get meeting transcript: " + e.getMessage()
+            );
         }
     }
+
+    @GetMapping("/by-eventId")
+    public Map<String, String> getTranscriptsByEventId(@RequestParam String eventId) {
+        try {
+            String transcript = transcriptService.getTranscriptByEventId(eventId);
+
+            return Map.of(
+                "eventId", eventId,
+                "meetingTranscript", transcript
+            );
+        } catch (Exception e) {
+            System.err.println("❌ Failed to get meeting transcript: eventId=" + eventId + ", error=" + e.getMessage());
+            e.printStackTrace();
+            return Map.of(
+                "eventId", eventId,
+                "meetingTranscript", "",
+                "error", "Failed to get meeting transcript: " + e.getMessage()
+            );
+        }
+    }
+
 
     /**
      * Update meeting transcript
