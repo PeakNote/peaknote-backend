@@ -8,21 +8,25 @@ PeakNote is a comprehensive meeting intelligence platform that integrates with M
 
 ### Core Capabilities
 - **Real-time Meeting Event Processing**: Automatic capture of Microsoft Teams meeting events via webhooks
-- **Intelligent Transcript Processing**: AI-powered meeting transcript analysis and summarization
+- **Intelligent Transcript Processing**: AI-powered meeting transcript analysis and summarization using Llama 3.3
 - **Attendee Management**: Comprehensive tracking of meeting participants
 - **Meeting URL Sharing**: Secure access control for meeting sharing
 - **Subscription Management**: Automated Microsoft Graph API subscription lifecycle management
+- **Email Integration**: Automated email notifications and PDF report generation
+- **Scheduled Synchronization**: Automated user and meeting data synchronization
 
 ### AI-Powered Features
-- **Meeting Summaries**: Generate structured meeting minutes using OpenAI
-- **Daily Stand-up Analysis**: Specialized processing for sprint daily stand-ups
+- **Meeting Summaries**: Generate structured meeting minutes using Llama 3.3-70B-Instruct
+- **Dynamic Template Generation**: AI creates custom summary templates based on meeting content
+- **HTML Report Generation**: Professional meeting reports in HTML format
 - **Content Categorization**: Automatic identification of action items and discussion points
 
 ### Integration Features
 - **Microsoft Graph API**: Full integration with Teams calendar and meeting data
 - **Webhook Processing**: Real-time event handling for meeting lifecycle
 - **Message Queue System**: Asynchronous processing using RabbitMQ
-- **Caching Layer**: Redis-based caching for improved performance
+- **Caching Layer**: Redis-based caching with Redisson for improved performance
+- **PDF Generation**: OpenHTMLToPDF integration for report generation
 
 ## Architecture
 
@@ -31,91 +35,161 @@ PeakNote is a comprehensive meeting intelligence platform that integrates with M
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Microsoft     │    │   PeakNote      │    │   External      │
 │   Teams/Graph   │◄──►│   Backend       │◄──►│   Services      │
+│   Webhooks      │    │   (Spring Boot) │    │   (Llama AI)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                               │
                               ▼
-                       ┌─────────────────┐
-                       │   Database      │
-                       │   (MySQL)       │
-                       └─────────────────┘
+                    ┌─────────────────────────┐
+                    │     Data Layer          │
+                    │  ┌─────┐ ┌─────┐ ┌─────┐│
+                    │  │MySQL│ │Redis│ │Rabbit││
+                    │  │     │ │     │ │  MQ ││
+                    │  └─────┘ └─────┘ └─────┘│
+                    └─────────────────────────┘
 ```
+
+### Docker Services
+The application includes Docker Compose configuration for local development:
+- **MySQL 8.0**: Database with health checks
+- **Redis 7**: Caching layer with health checks  
+- **RabbitMQ 3.8**: Message queue with management UI (port 15672)
 ![SystemDiagram](https://github.com/PeakNote/peaknote-backend/blob/develop/Blank%20diagram.jpeg)
 
 
 ### Technology Stack
 - **Framework**: Spring Boot 3.4.4
 - **Language**: Java 17
-- **Database**: MySQL 8.0
-- **Cache**: Redis with Redisson
-- **Message Queue**: RabbitMQ
-- **AI Integration**: OpenAI via Spring AI
-- **Authentication**: Azure AD with Microsoft Graph
+- **Database**: MySQL 8.0 with JPA/Hibernate
+- **Cache**: Redis 7 with Redisson 3.28.0
+- **Message Queue**: RabbitMQ 3.8+ with Management UI
+- **AI Integration**: Llama 3.3-70B-Instruct via Spring AI 1.0.0-M6
+- **Authentication**: Azure AD with Microsoft Graph 5.70.0
+- **PDF Generation**: OpenHTMLToPDF 1.0.10
+- **Email**: Spring Boot Mail with Gmail SMTP
 - **Build Tool**: Maven
+- **Additional**: Lombok 1.18.32, Azure Identity 1.10.4
 
 ## Quick Start
 
 ### Prerequisites
 - Java 17 or higher
-- MySQL 8.0+
-- Redis 6.0+
-- RabbitMQ 3.8+
+- Docker and Docker Compose (for local development)
 - Microsoft Azure App Registration
-- OpenAI API Key
+- Llama API Key (or compatible AI service)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd PeakNote/demo
+   cd PeakNote
    ```
 
-2. **Configure environment variables**
-   Create `application.yml` with the following configuration:
+2. **Start Docker services**
+   ```bash
+   docker-compose up -d
+   ```
+   This will start MySQL, Redis, and RabbitMQ with health checks.
+
+3. **Configure environment variables**
+   Update `src/main/resources/application.yml` with your configuration:
    ```yaml
    spring:
+     application:
+       name: demo
+     
      datasource:
-       url: jdbc:mysql://localhost:3306/peaknote
-       username: your_username
-       password: your_password
-     redis:
-       host: localhost
-       port: 6379
+       url: jdbc:mysql://localhost:3306/peaknote?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8
+       username: root
+       password: 123456
+       driver-class-name: com.mysql.cj.jdbc.Driver
+     
+     ai:
+       openai:
+         base-url: ${SPRING_AI_OPENAI_BASE_URL:https://api.llama.com/compat/}
+         api-key: ${SPRING_AI_OPENAI_API_KEY:your_llama_api_key}
+         chat:
+           options:
+             model: ${SPRING_AI_OPENAI_CHAT_MODEL:Llama-3.3-70B-Instruct}
+     
      rabbitmq:
        host: localhost
        port: 5672
        username: guest
        password: guest
+     
+     data:
+       redis:
+         host: localhost
+         port: 6379
+         password: # optional
+         timeout: 5000
+     
+     cache:
+       type: redis
+       redis:
+         time-to-live: 600000
+         cache-null-values: true
+     
+     jpa:
+       hibernate:
+         ddl-auto: update
+       show-sql: true
+       properties:
+         hibernate:
+           format_sql: true
+     
+     mail:
+       host: smtp.gmail.com
+       port: 587
+       username: your_email@gmail.com
+       password: your_app_password
+       properties:
+         mail:
+           smtp:
+             auth: true
+             starttls:
+               enable: true
+             debug: true
+           debug: true
 
    azure:
+     tenant-id: your_azure_tenant_id
      client-id: your_azure_client_id
      client-secret: your_azure_client_secret
-     tenant-id: your_azure_tenant_id
+     graph:
+       scope: https://graph.microsoft.com/.default
 
    webhook:
+     tenant-id: your_webhook_tenant_id
      client-id: your_webhook_client_id
      client-secret: your_webhook_client_secret
-     tenant-id: your_webhook_tenant_id
 
    notification-url: https://your-domain.com/webhook/notification
-   teams-transcript-url: https://your-domain.com/webhook/teams-transcript
-
-   spring:
-     ai:
-       openai:
-         api-key: your_openai_api_key
-         base-url: https://api.openai.com
    ```
 
-3. **Build the application**
+4. **Build the application**
    ```bash
    mvn clean install
    ```
 
-4. **Run the application**
+5. **Run the application**
    ```bash
    mvn spring-boot:run
    ```
+
+6. **Access services**
+   - Application: http://localhost:8080
+   - RabbitMQ Management: http://localhost:15672 (guest/guest)
+   - Database: localhost:3306 (root/123456)
+   - Redis: localhost:6379
+
+### Application Startup Process
+The application automatically performs the following on startup:
+1. **User Synchronization**: Syncs Microsoft Teams users from Graph API
+2. **Subscription Cleanup**: Removes previous Graph API subscriptions
+3. **Subscription Registration**: Creates new webhook subscriptions for all users
+4. **Health Checks**: Verifies all service connections
 
 ## API Documentation
 
@@ -128,10 +202,20 @@ PeakNote is a comprehensive meeting intelligence platform that integrates with M
 - `GET /transcript/by-url?url={meetingUrl}` - Get transcript by meeting URL
 - `POST /transcript/update` - Update transcript content
 
+#### Email & Reports
+- `POST /mail/send` - Send email notifications
+- `POST /mail/generate-pdf` - Generate PDF reports from meeting data
+
 #### Webhook Endpoints
 - `GET /webhook/notification` - Microsoft Graph webhook validation
 - `POST /webhook/notification` - Handle meeting event notifications
 - `POST /webhook/teams-transcript` - Handle transcript notifications
+- `POST /webhook/teams-lifecycle` - Handle Graph subscription lifecycle events
+
+#### Debug & Monitoring
+- `GET /debug/status` - Application health and status
+- `GET /debug/subscriptions` - View active Graph subscriptions
+- `GET /debug/queues` - Monitor message queue status
 
 ### Response Formats
 
@@ -159,17 +243,20 @@ PeakNote is a comprehensive meeting intelligence platform that integrates with M
 ## Database Schema
 
 ### Core Tables
-- **users**: Microsoft Teams user information
-- **meeting_event**: Meeting event details from Microsoft Graph
-- **meeting_attendee**: Meeting participant information
+- **teams_user**: Microsoft Teams user information and synchronization status
+- **meeting_event**: Meeting event details from Microsoft Graph with transcript status
+- **meeting_attendee**: Meeting participant information linked to events
 - **meeting_transcript**: Meeting transcript content and metadata
-- **meeting_url_access**: Meeting URL sharing permissions
-- **graph_subscription**: Microsoft Graph API subscriptions
+- **meeting_instance**: Individual meeting instances for recurring meetings
+- **meeting_url_access**: Meeting URL sharing permissions and access control
+- **graph_user_subscription**: Microsoft Graph API subscriptions per user
 
 ### Key Relationships
 - Meeting events can have multiple attendees and transcripts
-- Users can share meeting URLs with other users
-- Graph subscriptions track webhook lifecycle
+- Meeting instances track individual occurrences of recurring meetings
+- Users can share meeting URLs with other users through access control
+- Graph subscriptions are managed per user for webhook lifecycle
+- Teams users are synchronized and linked to meeting participants
 
 ## Configuration
 
@@ -182,9 +269,10 @@ PeakNote is a comprehensive meeting intelligence platform that integrates with M
 3. Configure webhook endpoints for real-time notifications
 
 ### RabbitMQ Configuration
-The application uses two main queues:
-- `peaknote.event.queue`: For meeting event processing
-- `peaknote.transcript.queue`: For transcript processing
+The application uses message queues for asynchronous processing:
+- **Event Queue**: For Microsoft Graph meeting event processing
+- **Transcript Queue**: For meeting transcript processing and AI summarization
+- **Management UI**: Available at http://localhost:15672 for monitoring
 
 ### Redis Configuration
 - Caching for transcript content and URL mappings
@@ -196,20 +284,51 @@ The application uses two main queues:
 ### Project Structure
 ```
 src/main/java/com/peaknote/demo/
-├── config/          # Configuration classes
-├── controller/      # REST API controllers
-├── entity/          # JPA entities
-├── model/           # Data transfer objects
-├── repository/      # Data access layer
-└── service/         # Business logic services
+├── config/              # Configuration classes
+│   ├── AIConfig.java
+│   ├── AzureProperties.java
+│   ├── CacheConfig.java
+│   ├── GlobalExceptionHandler.java
+│   ├── GraphClientConfig.java
+│   ├── RabbitMQConfig.java
+│   ├── RedisConfig.java
+│   └── WebhookProperties.java
+├── controller/          # REST API controllers
+│   ├── AttendeeController.java
+│   ├── DebugController.java
+│   ├── MailController.java
+│   ├── TranscriptController.java
+│   └── WebhookController.java
+├── entity/              # JPA entities
+│   ├── GraphUserSubscription.java
+│   ├── MeetingAttendee.java
+│   ├── MeetingEvent.java
+│   ├── MeetingTranscript.java
+│   ├── MeetingUrlAccess.java
+│   └── TeamsUser.java
+├── service/             # Business logic services
+│   ├── GraphService.java
+│   ├── MeetingSummaryService.java
+│   ├── SubscriptionService.java
+│   ├── TeamsUserSyncService.java
+│   ├── TranscriptService.java
+│   └── MailService.java
+├── repository/          # Data access layer
+├── dto/                 # Data transfer objects
+├── exception/           # Custom exceptions
+└── util/                # Utility classes
 ```
 
 ### Key Services
-- **GraphService**: Microsoft Graph API integration
+- **GraphService**: Microsoft Graph API integration and authentication
 - **TranscriptService**: Transcript processing and management
-- **MeetingSummaryService**: AI-powered meeting summarization
-- **SubscriptionService**: Graph API subscription management
-- **MessageConsumer**: Asynchronous message processing
+- **MeetingSummaryService**: AI-powered meeting summarization using Llama 3.3
+- **SubscriptionService**: Graph API subscription lifecycle management
+- **TeamsUserSyncService**: Automated user synchronization from Microsoft Teams
+- **MailService**: Email notifications and PDF report generation
+- **MessageConsumer**: Asynchronous message processing via RabbitMQ
+- **MessageProducer**: Message queue publishing
+- **PayloadParserService**: Webhook payload parsing and validation
 
 ### Adding New Features
 1. Create entity classes in `entity/` package
@@ -221,6 +340,32 @@ src/main/java/com/peaknote/demo/
 ## Deployment
 
 ### Docker Deployment
+The project includes `docker-compose.yml` for easy local development:
+
+```yaml
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: peaknote
+    ports:
+      - "3306:3306"
+  
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+```
+
+### Production Dockerfile
 ```dockerfile
 FROM openjdk:17-jdk-slim
 COPY target/demo-0.0.1-SNAPSHOT.jar app.jar
