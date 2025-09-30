@@ -19,6 +19,8 @@ import com.peaknote.demo.repository.MeetingTranscriptRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import com.peaknote.demo.dto.MeetingSummary;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,6 +28,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -137,6 +140,37 @@ public class TranscriptService {
             return null; // Store null to prevent message penetration
         }
     }
+
+    //@Cacheable(value = "urlEventCache", key = "#url")
+    public Map<String, Object> getMeetingDataByUrl(String url) {
+        List<String> eventIds = getEventIdsByUrl(url);
+
+        // 获取 transcript
+        String transcript = getTranscriptByEventId(eventIds.get(0)); // 假设你已有这个方法
+
+        // 获取 meetingList
+        List<MeetingSummary> meetingSummaries = meetingEventRepository.findMeetingSummariesByEventIds(eventIds);
+
+        List<Map<String, String>> meetingList = meetingSummaries.stream()
+            .map(m -> Map.of(
+                "eventId", m.getEventId(),
+                "topic", m.getTopic(),
+                "startTime", m.getStartTime().toString(),
+                "endTime", m.getEndTime().toString()
+            ))
+            .toList();
+
+        Map<String, String> meetingDetails = Map.of(
+            "eventId", eventIds.get(0),
+            "transcript", transcript
+        );
+
+        return Map.of(
+            "meetingList", meetingList,
+            "meetingDetails", meetingDetails
+        );
+    }
+
 
     /**
      * Query transcript based on EventId, with caching

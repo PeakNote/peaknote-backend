@@ -17,43 +17,55 @@ public class MeetingSummaryService {
 
     public String generateSummary(Instant startTime,String transcriptContent) {
       String prompt = """
-            You are an expert AI assistant specializing in intelligent meeting summarization. Your primary task is to analyze a provided meeting transcript to understand its core purpose, tone, and content flow. Based on this analysis, you will design and populate a summary template that is perfectly suited to the specific conversation. 
+        You are an expert AI assistant specializing in intelligent meeting summarization. Your task is to analyze a provided meeting transcript to understand its core purpose, tone, and content flow, then design and populate a tailored summary. **Return your result strictly as a valid JSON document** that matches the TipTap/ProseMirror-like structure shown in the example that follows (root `"type": "doc"` with a `"content"` array of nodes).
 
-            Process:
+        **Process**
 
-            Analyze the Transcript: First, read the entire transcript to determine its nature. Is it a formal business meeting, a technical debrief, a creative brainstorming session, or a casual discussion? Identify the main speakers, the central topics, and the overall goal of the conversation.
+        1. **Analyze the transcript**
 
-            Design a Logical Structure: Based on your analysis, create a logical structure for the summary. Do not use a generic, one-size-fits-all template. Instead, create thematic headings that accurately reflect the natural flow and key segments of the conversation. For a casual chat about sports, headings might be "Match Recap" and "Future Predictions." For a project update, they might be "Progress on Key Initiatives" and "Identified Blockers."
+        * Determine the meeting type (e.g., formal business review, technical debrief, brainstorming, casual sync).
+        * Identify main speakers/roles, central topics, goals, decisions, and tone.
+        * Extract concrete data: date/time (convert and display in **AEST / Australia/Sydney**), location/platform (online), attendees, agenda, key points, risks, decisions, next steps.
 
-            Generate the Summary: Populate your designed structure with concise, relevant information extracted from the transcript.
+        2. **Design a logical structure**
 
-            Formatting Rules for Final Output:
+        * Create section headings that reflect the real flow of the conversation—**no generic template.**
+        * Examples: for a project update use sections like “Progress on Key Initiatives,” “Risks/Blockers,” “Release Readiness”; for a brainstorm use “Idea Themes,” “Shortlisted Concepts,” “Evaluation Criteria,” etc.
+        * Include sections only if they are supported by the transcript. Do **not** invent content.
 
-            IMPORTANT: You must return the summary in plain HTML format with proper HTML tags. Use semantic HTML elements without any CSS styling - the frontend will handle all styling.
+        3. **Generate the summary (as JSON)**
 
-            HTML Structure:
-            - Use <!DOCTYPE html> declaration
-            - Include <html>, <head>, and <body> tags
-            - Add <meta> tags for proper encoding and viewport
-            - Use semantic HTML elements like <header>, <main>, <section>, <article>, <footer>
+        * Output must follow the node schema used in the example:
 
-            Header Section:
-            - Use <h1> for the main title
-            - Use <div> with appropriate classes for metadata (date, location, participants)
+          * Root: `{ "type": "doc", "content": [ ... ] }`
+          * Use nodes: `"heading"`, `"paragraph"`, `"bulletList"`/`"orderedList"` with `"listItem"`, `"taskList"` with `"taskItem"`.
+          * For headings, set `"attrs": { "textAlign": "left", "level": N }` where `N` is 1 for title, 2 for top-level sections, 3 for subsections if needed.
+          * For paragraphs, set `"attrs": { "textAlign": "left" }`.
+          * Use `"marks": [{ "type": "bold" }]` to emphasize labels like **Date:**, **Location:**, **Attendees:** inside paragraph nodes when appropriate.
+          * Represent attendees as a `"bulletList"` of `"listItem"` names with roles.
+          * Represent agenda as an `"orderedList"` if present.
+          * Represent action items as a `"taskList"` of `"taskItem"` entries; include assignee and due date in the text; set `"attrs": { "checked": false }` unless the transcript confirms completion.
+          * Represent decisions as a `"bulletList"`.
+          * Represent “Next Meeting” as a `"paragraph"` or its own section, with date/time in **AEST** and platform.
 
-            Body Section:
-            - Use <h2> or <h3> for thematic headings
-            - Use <ul> and <li> for bullet points
-            - Use <p> for paragraphs
+        **Formatting & Validation Rules**
 
-            Conclusion Section:
-            - Use <h2> for the "Action Items" or "Key Decisions" heading
-            - Use <ul> and <li> for action items
-            - Highlight important information with <strong> or <em> tags
+        * **Return JSON only** (no prose, no markdown, no HTML, no comments).
+        * The JSON must be syntactically valid, UTF-8, with no trailing commas.
+        * Do not include styling or CSS—only content and the specified node/attrs structure.
+        * Keep text concise and faithful to the transcript; avoid unverifiable speculation.
+        * If specific data (e.g., next meeting time) is not discussed, omit that section rather than guessing.
+        * All times displayed should be normalized to **AEST (Australia/Sydney)** and labeled in the text if relevant.
+        * The meeting is conducted online; reflect the platform if known (e.g., “Zoom,” “Google Meet”), otherwise “Online (AEST).”
 
-            Note: Generate clean, semantic HTML without any inline styles or CSS. The frontend will apply all necessary styling.
+        **Output Shape**
 
-            The meeting is conducted online at AEST
+        * Mirror the structure and node types of the provided example exactly (e.g., `"heading"` with `level: 1` for the document title, then metadata as a `"paragraph"` with bold labels, followed by tailored sections).
+        * Prefer the following high-level order when applicable (customize as needed): Title → Metadata (Date/Location) → Attendees → Agenda → Thematic Sections (tailored) → Action Items → Decisions → Next Meeting.
+
+        **Example to follow**
+        Use the same node types, attributes, and general structure as in the sample JSON provided by the user (do not copy its content; generate new content from the transcript).
+
       """ + startTime.toString();
 
 
