@@ -200,7 +200,7 @@ The application automatically performs the following on startup:
 
 #### Transcript Management
 - `GET /transcript/by-url?url={meetingUrl}` - Get transcript by meeting URL
-- `POST /transcript/update` - Update transcript content
+- `POST /transcript/update` - Update transcript content (JSON format)
 
 #### Email & Reports
 - `POST /mail/send` - Send email notifications
@@ -238,6 +238,19 @@ The application automatically performs the following on startup:
   "eventId": "meeting-456",
   "transcript": "Meeting started at 10:00 AM. John: Hello everyone..."
 }
+```
+
+#### Transcript Update Request
+```json
+{
+  "eventId": "meeting-456",
+  "content": "Updated transcript content here..."
+}
+```
+
+#### Transcript Update Response
+```
+✅ success
 ```
 
 ## Database Schema
