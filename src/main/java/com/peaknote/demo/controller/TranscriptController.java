@@ -57,8 +57,11 @@ public class TranscriptController {
      * Update meeting transcript
      */
     @PostMapping("/update")
-    public String updateTranscript(@RequestParam String eventId, @RequestParam String content) {
+    public String updateTranscript(@RequestBody Map<String, String> request) {
         try {
+            String eventId = request.get("eventId");
+            String content = request.get("content");
+            
             if (eventId == null || eventId.trim().isEmpty()) {
                 throw new IllegalArgumentException("Event ID cannot be empty");
             }
@@ -69,11 +72,11 @@ public class TranscriptController {
             transcriptService.updateTranscript(eventId, content);
             return "✅ success";
         } catch (Exception e) {
-            System.err.println("❌ Failed to update meeting transcript: eventId=" + eventId + ", error=" + e.getMessage());
+            System.err.println("❌ Failed to update meeting transcript: eventId=" + 
+                request.get("eventId") + ", error=" + e.getMessage());
             e.printStackTrace();
             return "❌ Update failed: " + e.getMessage();
         }
     }
 
-    
 }
