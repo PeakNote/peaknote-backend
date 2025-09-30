@@ -30,7 +30,7 @@ public class WebhookController {
 
     @GetMapping("/notification")
     public ResponseEntity<String> validateGet(@RequestParam("validationToken") String token) {
-        log.info("✅ Received Graph validation GET request, returning token: {}", token);
+        log.info("Received Graph validation GET request, returning token: {}", token);
         return ResponseEntity.ok(token);
     }
 
@@ -39,12 +39,12 @@ public class WebhookController {
                                                      @RequestBody(required = false) String payload) {
         String token = request.getParameter("validationToken");
         if (token != null) {
-            log.info("✅ Received Graph validation POST request, returning token: {}", token);
+            log.info(" Received Graph validation POST request, returning token: {}", token);
             return ResponseEntity.ok(token);
         }
 
         try {
-            log.info("✅ Received event webhook, starting processing");
+            log.info(" Received event webhook, starting processing");
             messageProducer.sendEventMessage(payload);
             // String userId = payloadParserService.extractUserIdFromEventPayload(payload);
             // String eventId = payloadParserService.extractEventIdFromEventPayload(payload);
@@ -53,7 +53,7 @@ public class WebhookController {
 
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
-            log.error("❌ Failed to process event webhook: {}", e.getMessage(), e);
+            log.error(" Failed to process event webhook: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Failed");
         }
     }
@@ -63,12 +63,12 @@ public class WebhookController {
                                                         @RequestBody(required = false) String payload) {
         String token = request.getParameter("validationToken");
         if (token != null) {
-            log.info("✅ Received Graph validation POST request, returning token: {}", token);
+            log.info(" Received Graph validation POST request, returning token: {}", token);
             return ResponseEntity.ok(token);
         }
 
         try {
-            log.info("✅ Received transcript webhook, starting processing");
+            log.info(" Received transcript webhook, starting processing");
 
             messageProducer.sendTranscriptMessage(payload);
             // TranscriptInfo transcriptInfo = payloadParserService.parseTranscriptInfo(payload);
@@ -78,7 +78,7 @@ public class WebhookController {
 
             // if (subscriptionId != null) {
             //     graphService.deleteSubscription(subscriptionId);
-            //     log.info("✅ Closed subscription ID: {}", subscriptionId);
+            //     log.info(" Closed subscription ID: {}", subscriptionId);
             // }
 
             // transcriptService.downloadTranscriptContent(
@@ -89,7 +89,7 @@ public class WebhookController {
             // );
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
-            log.error("❌ Failed to process transcript webhook: {}", e.getMessage(), e);
+            log.error(" Failed to process transcript webhook: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body("Failed");
         }
     }
@@ -104,12 +104,12 @@ public class WebhookController {
         String validationToken = request.getParameter("validationToken");
         if (validationToken != null) {
             // Graph validation process, requires returning validation token
-            log.info("✅ Received Graph lifecycle validation request, returning token: {}", validationToken);
+            log.info(" Received Graph lifecycle validation request, returning token: {}", validationToken);
             return ResponseEntity.ok(validationToken);
         }
 
         // No validationToken means lifecycle event notification (e.g., renewal, exception reminder)
-        log.info("✅ Received Graph lifecycle event notification, content: {}", payload);
+        log.info(" Received Graph lifecycle event notification, content: {}", payload);
 
         // TODO: Here you can parse payload and process according to event type, such as auto-renewal subscription
         // For example, judge based on lifecycleEvent field in payload

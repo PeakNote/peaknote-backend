@@ -70,12 +70,12 @@ public class TranscriptController {
             }
             
             transcriptService.updateTranscript(eventId, content);
-            return "✅ success";
+            return "success";
         } catch (Exception e) {
             System.err.println("❌ Failed to update meeting transcript: eventId=" + 
                 request.get("eventId") + ", error=" + e.getMessage());
             e.printStackTrace();
-            return "❌ Update failed: " + e.getMessage();
+            return "Update failed: " + e.getMessage();
         }
     }
 
