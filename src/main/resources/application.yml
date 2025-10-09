@@ -1,0 +1,114 @@
+# =============================================================================
+# PeakNote Application Configuration
+# =============================================================================
+# This configuration file contains all the necessary settings for the PeakNote
+# application, including database connections, external service integrations,
+# caching, messaging, and logging configurations.
+
+spring:
+  # Application identification
+  application:
+    name: demo  # Application name identifier
+
+  # Database Configuration
+  # MySQL database connection settings for storing meeting data, transcripts, and user information
+  datasource:
+    url: jdbc:mysql://localhost:3306/peaknote?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # AI Service Configuration
+  # Configuration for AI/LLM service integration (using Llama model)
+  ai:
+    openai:
+      base-url: ${SPRING_AI_OPENAI_BASE_URL:https://api.llama.com/compat/}
+      api-key: ${SPRING_AI_OPENAI_API_KEY:exampleKey}
+      chat:
+        options:
+          model: ${SPRING_AI_OPENAI_CHAT_MODEL:exampleModel}
+
+  # Message Queue Configuration
+  # RabbitMQ settings for asynchronous message processing and event handling
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  # Redis Configuration
+  # Redis settings for caching and session management
+  data:
+    redis:
+      host: localhost   # Redis server host (default localhost, change for remote)
+      port: 6379        # Redis default port
+      password:         # Redis password (leave empty if no password required)
+      timeout: 5000     # Connection timeout in milliseconds
+
+  # Cache Configuration
+  # Spring Cache abstraction with Redis backend
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # Default TTL 600 seconds (10 minutes), can be overridden in annotations
+      cache-null-values: true # Cache null values to prevent cache penetration attacks
+
+  # JPA/Hibernate Configuration
+  # Database ORM settings for entity management and SQL generation
+  jpa:
+    hibernate:
+      ddl-auto: update  # Automatically create/update database schema based on entities
+    show-sql: true      # Display generated SQL queries in console (useful for debugging)
+    properties:
+      hibernate:
+        format_sql: true  # Format SQL queries for better readability
+
+  # Email Service Configuration
+  # SMTP settings for sending meeting summaries and notifications
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: example@gmail.com
+    password: examplepassword # 16-character app-specific password for Gmail
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          debug: true  # Enable SMTP debugging for troubleshooting
+        debug: true    # Enable JavaMail debugging
+
+# Azure Active Directory Configuration
+# Microsoft Graph API integration for Teams meeting data and user authentication
+azure:
+  tenant-id: exampletenantid
+  client-id: exampleclientid
+  client-secret: exampleclientsecret
+  graph:
+    scope: https://graph.microsoft.com/.default  # Microsoft Graph API scope
+
+# Webhook Configuration
+# Settings for receiving Teams meeting webhook notifications
+webhook:
+  tenant-id: exampletenantid
+  client-id: exampleclientid
+  client-secret: exampleclientsecret
+
+# Notification URL Configuration
+# Public URL for receiving webhook notifications (using ngrok for local development)
+notification-url: https://examplengrokfreeapp.ngrok-free.app/
+# Alternative notification URL (commented out)
+# notification-url: https://renewing-macaque-jolly.ngrok-free.app/
+
+# Logging Configuration
+# Detailed logging settings for debugging and monitoring
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: debug  # Log all SQL queries
+        type:
+          descriptor:
+            sql:
+              BasicBinder: trace  # Log SQL parameter binding details
