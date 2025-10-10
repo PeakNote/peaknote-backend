@@ -53,7 +53,8 @@ The application includes Docker Compose configuration for local development:
 - **MySQL 8.0**: Database with health checks
 - **Redis 7**: Caching layer with health checks  
 - **RabbitMQ 3.8**: Message queue with management UI (port 15672)
-![SystemDiagram](https://github.com/PeakNote/peaknote-backend/blob/develop/Blank%20diagram.jpeg)
+
+<img width="3681" height="2311" alt="PeakNote drawio" src="https://github.com/user-attachments/assets/ff88256a-a40f-4e03-a949-67e6471cec82" />
 
 
 ### Technology Stack
